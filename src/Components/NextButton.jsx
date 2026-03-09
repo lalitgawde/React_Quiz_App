@@ -1,7 +1,6 @@
 import React from "react";
 
 function NextButton({ dispatch, answer, numQuestions, currentQuestion }) {
-  console.log("numQuestions", numQuestions, "currentQuestion", currentQuestion);
   if (answer === null) return null;
   if (currentQuestion === numQuestions) {
     return (

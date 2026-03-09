@@ -7,6 +7,7 @@ import Question from "./Components/Question";
 import NextButton from "./Components/NextButton";
 import Progress from "./Components/Progress";
 import FinishedScreen from "./Components/FinishedScreen";
+import { useRef } from "react";
 
 const initialState = {
   questions: [],
@@ -15,6 +16,7 @@ const initialState = {
   answer: null,
   highScore: 0,
   points: 0,
+  activeTimer: 300,
 };
 
 function reducer(state, action) {
@@ -53,6 +55,12 @@ function reducer(state, action) {
       status: "ready",
       questions: state.questions,
     };
+  } else if (action.type === "updateTimer") {
+    return {
+      ...state,
+      activeTimer: state.activeTimer - 1,
+      status: state.activeTimer === 0 ? "Finished" : state.status,
+    };
   } else {
     return state;
   }
@@ -60,10 +68,18 @@ function reducer(state, action) {
 
 function App() {
   const [
-    { questions, status, currentQuestion, answer, points, highScore },
+    {
+      questions,
+      status,
+      currentQuestion,
+      answer,
+      points,
+      highScore,
+      activeTimer,
+    },
     dispatch,
   ] = useReducer(reducer, initialState);
-
+  const timerRef = useRef(null);
   const numQuestions = questions.length;
   const totalPointsAvaible = questions.reduce(
     (prev, question) => prev + question.points,
@@ -81,6 +97,19 @@ function App() {
         dispatch({ type: "dataFailed" });
       });
   }, []);
+
+  useEffect(() => {
+    if (status === "active" && timerRef.current === null) {
+      timerRef.current = setInterval(() => {
+        dispatch({ type: "updateTimer" });
+      }, 1000);
+    }
+    if (status !== "active" && timerRef.current !== null) {
+      clearInterval(timerRef.current);
+    }
+
+    () => clearInterval(timerRef.current);
+  }, [status, dispatch]);
 
   return (
     <div className="app">
@@ -105,12 +134,15 @@ function App() {
               answer={answer}
               dispatch={dispatch}
             />
-            <NextButton
-              dispatch={dispatch}
-              answer={answer}
-              numQuestions={numQuestions}
-              currentQuestion={currentQuestion}
-            />
+            <div>
+              <div className="timer">{`${activeTimer / 60 > 10 ? "" : "0" + Math.floor(activeTimer / 60)} : ${activeTimer % 60 > 9 ? activeTimer % 60 : "0" + (activeTimer % 60)}`}</div>
+              <NextButton
+                dispatch={dispatch}
+                answer={answer}
+                numQuestions={numQuestions}
+                currentQuestion={currentQuestion}
+              />
+            </div>
           </>
         )}
         {status === "Finished" && (
